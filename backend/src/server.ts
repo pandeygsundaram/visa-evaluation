@@ -23,13 +23,28 @@ console.log('===================================');
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || [  'http://localhost:3000',
-    'http://localhost:5500',
-    'http://127.0.0.1:5500'] ,
-  credentials: true
-}));
+const allowedOrigins = [
+  'https://www.visaeval.live',
+  'https://visaeval.live',
+  'http://localhost:3000',
+  'http://127.0.0.1:5500',
+  'http://localhost:5500'
+];
 
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. curl, server-side calls)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn('❌ Blocked by CORS:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
 // IMPORTANT: Webhook route MUST come before express.json() middleware
 // Stripe webhooks require raw body for signature verification
 app.use('/api/webhook', webhookRoutes);
