@@ -4,6 +4,7 @@ import { getVisaType } from '../config/visaData';
 import { uploadToR2, validateR2Config, generateSignedUrlsForDocuments } from '../utils/r2Storage';
 import { extractDocumentText, getFileExtension, isSupportedFileType } from '../utils/documentExtractor';
 import { analyzeDocument, validateOpenAIConfig } from '../services/openaiService';
+import stripeService from '../services/stripeService';
 
 /**
  * Create a new evaluation with document upload
@@ -12,8 +13,17 @@ import { analyzeDocument, validateOpenAIConfig } from '../services/openaiService
 export const createEvaluation = async (req: Request, res: Response): Promise<void> => {
   try {
     const { country, visaType: visaCode } = req.body;
-    const userId = (req as any).user.id; // From auth middleware
+    // Support both JWT auth and API key auth
+    const userId = (req as any).user?.id || (req as any).apiKeyContext?.userId;
     const files = req.files as Express.Multer.File[];
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+      return;
+    }
 
     // Validation
     if (!country || !visaCode) {
@@ -55,6 +65,45 @@ export const createEvaluation = async (req: Request, res: Response): Promise<voi
       res.status(500).json({
         success: false,
         message: 'OpenAI is not properly configured. Please contact administrator.'
+      });
+      return;
+    }
+
+    // Check subscription quota
+    console.log(`🔍 Checking subscription quota for user ${userId}`);
+    try {
+      const quotaCheck = await stripeService.checkSubscriptionQuota(userId);
+
+      if (!quotaCheck.hasQuota) {
+        console.log(`❌ Quota exceeded for user ${userId}: ${quotaCheck.subscription?.callsUsed || 0}/${quotaCheck.plan.callLimit}`);
+        res.status(402).json({
+          success: false,
+          message: `You've reached your evaluation limit (${quotaCheck.plan.callLimit} ${quotaCheck.plan.billingPeriod}). Please upgrade to continue.`,
+          code: 'QUOTA_EXCEEDED',
+          data: {
+            currentPlan: {
+              name: quotaCheck.plan.name,
+              tier: quotaCheck.plan.tier,
+              callLimit: quotaCheck.plan.callLimit
+            },
+            usage: {
+              used: quotaCheck.subscription?.callsUsed || quotaCheck.plan.callLimit,
+              limit: quotaCheck.plan.callLimit,
+              remaining: 0
+            },
+            periodEnd: quotaCheck.subscription?.currentPeriodEnd
+          }
+        });
+        return;
+      }
+
+      console.log(`✅ Quota available: ${quotaCheck.callsRemaining} remaining`);
+    } catch (error: any) {
+      console.error('❌ Error checking quota:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to check subscription quota',
+        error: error.message
       });
       return;
     }
@@ -165,6 +214,15 @@ export const createEvaluation = async (req: Request, res: Response): Promise<voi
       await evaluation.save();
 
       console.log(`✅ Evaluation completed: ${evaluation._id}`);
+
+      // Increment subscription usage count
+      try {
+        await stripeService.incrementSubscriptionUsage(userId);
+        console.log(`📊 Incremented usage count for user ${userId}`);
+      } catch (error: any) {
+        console.error('⚠️  Failed to increment usage count:', error.message);
+        // Don't fail the request if usage increment fails - evaluation is already done
+      }
 
       // Generate signed URLs for documents (valid for 1 hour)
       const documentsWithSignedUrls = await generateSignedUrlsForDocuments(

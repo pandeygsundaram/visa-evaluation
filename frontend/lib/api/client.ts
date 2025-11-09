@@ -14,11 +14,26 @@ export const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage
+    // Get token from Zustand persisted storage
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
+      try {
+        // Try to get from Zustand persist storage
+        const authStorage = localStorage.getItem('auth-storage');
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          const token = parsed?.state?.token;
+          if (token && config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+        } else {
+          // Fallback to direct token (backwards compatibility)
+          const token = localStorage.getItem('auth_token');
+          if (token && config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+        }
+      } catch (error) {
+        console.error('Error reading auth token:', error);
       }
     }
     return config;
@@ -42,6 +57,7 @@ apiClient.interceptors.response.use(
       // Unauthorized - clear token and redirect to login
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth-storage'); // Clear Zustand persist storage
         if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login';
         }

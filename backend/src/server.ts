@@ -6,6 +6,9 @@ dotenv.config();
 import authRoutes from './routes/auth';
 import visaConfigRoutes from './routes/visaConfig';
 import evaluationRoutes from './routes/evaluation';
+import subscriptionRoutes from './routes/subscription';
+import webhookRoutes from './routes/webhook';
+import analyticsRoutes from './routes/analytics';
 
 // Load environment variables
 
@@ -21,9 +24,16 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin:  [    'http://localhost:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500'] ,
   credentials: true
 }));
+
+// IMPORTANT: Webhook route MUST come before express.json() middleware
+// Stripe webhooks require raw body for signature verification
+app.use('/api/webhook', webhookRoutes);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -42,10 +52,13 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/visa-config', visaConfigRoutes);
 app.use('/api/evaluations', evaluationRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

@@ -1,12 +1,65 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
-import { User, Mail, Calendar, Shield, Key } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { User, Mail, Calendar, Shield, Key, CreditCard, Zap, ArrowRight } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export default function ProfilePage() {
-  const { user } = useAuthStore();
+  const router = useRouter();
+  const { user, token } = useAuthStore();
+  const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(true);
+  const [evaluationsCount, setEvaluationsCount] = useState(0);
+  const [loadingEvaluations, setLoadingEvaluations] = useState(true);
+
+  useEffect(() => {
+    fetchSubscriptionInfo();
+    fetchEvaluationsCount();
+  }, []);
+
+  const fetchSubscriptionInfo = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSubscriptionInfo(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
+
+  const fetchEvaluationsCount = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/evaluations`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setEvaluationsCount(data.data?.evaluations?.length || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching evaluations:', error);
+    } finally {
+      setLoadingEvaluations(false);
+    }
+  };
 
   if (!user) {
     return null;
@@ -114,7 +167,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="text-center p-4 bg-[var(--muted)] rounded-lg border border-[var(--border)]">
                   <div className="text-3xl font-bold text-[var(--accent)]">
-                    {user.evaluations?.length || 0}
+                    {loadingEvaluations ? '...' : evaluationsCount}
                   </div>
                   <div className="text-sm text-[var(--muted-foreground)] mt-1">Evaluations</div>
                 </div>
@@ -124,6 +177,84 @@ export default function ProfilePage() {
         </div>
 
         <div className="space-y-6">
+          {/* Subscription Card */}
+          {!loadingSubscription && subscriptionInfo && (
+            <Card className="border-[var(--primary)]">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-[var(--foreground)]">
+                    Subscription
+                  </h2>
+                  {subscriptionInfo.isActive && !subscriptionInfo.onFreePlan ? (
+                    <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--success)]/10 text-[var(--success)]">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--muted)] text-[var(--muted-foreground)]">
+                      Free
+                    </span>
+                  )}
+                </div>
+              </CardHeader>
+              <CardBody>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-[var(--foreground)] mb-1">
+                      {subscriptionInfo.plan.name}
+                    </h3>
+                    {!subscriptionInfo.onFreePlan && (
+                      <p className="text-sm text-[var(--muted-foreground)]">
+                        ${(subscriptionInfo.plan.price / 100).toFixed(0)}/{subscriptionInfo.plan.billingPeriod === 'monthly' ? 'mo' : 'yr'}
+                      </p>
+                    )}
+                  </div>
+
+                  {subscriptionInfo.subscription && !subscriptionInfo.onFreePlan && (
+                    <div>
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <span className="text-[var(--muted-foreground)]">Usage</span>
+                        <span className="font-medium text-[var(--foreground)]">
+                          {subscriptionInfo.subscription.callsUsed} / {subscriptionInfo.plan.callLimit}
+                        </span>
+                      </div>
+                      <div className="w-full bg-[var(--muted)] rounded-full h-1.5">
+                        <div
+                          className="bg-[var(--primary)] h-1.5 rounded-full transition-all"
+                          style={{
+                            width: `${(subscriptionInfo.subscription.callsUsed / subscriptionInfo.plan.callLimit) * 100}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-2 space-y-2">
+                    {subscriptionInfo.onFreePlan ? (
+                      <Button
+                        onClick={() => router.push('/pricing')}
+                        className="w-full"
+                        size="sm"
+                      >
+                        <Zap className="w-4 h-4 mr-2" />
+                        Upgrade Plan
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        onClick={() => router.push('/dashboard/subscription/manage')}
+                        className="w-full"
+                        size="sm"
+                      >
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Manage Subscription
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <h2 className="text-lg font-semibold text-[var(--foreground)]">
