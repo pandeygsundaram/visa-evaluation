@@ -102,6 +102,17 @@ export const handleSubscriptionCreated = async (subscription: Stripe.Subscriptio
 
     if (!userId || !planId) {
       console.error('Missing userId or planId in subscription metadata');
+      console.error('Subscription metadata:', subscription.metadata);
+      return;
+    }
+
+    // Check if subscription already exists
+    const existingSubscription = await Subscription.findOne({
+      stripeSubscriptionId: subscription.id
+    });
+
+    if (existingSubscription) {
+      console.log(`Subscription ${subscription.id} already exists, skipping creation`);
       return;
     }
 
@@ -162,20 +173,26 @@ export const handleSubscriptionUpdated = async (subscription: Stripe.Subscriptio
       ? stripeSubscription.current_period_end
       : Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60);
 
+    const newPeriodStart = new Date(periodStart * 1000);
+
+    // Check if period has renewed (period start changed)
+    const periodRenewed = newPeriodStart.getTime() !== dbSubscription.currentPeriodStart.getTime();
+
     // Update subscription
     await Subscription.findByIdAndUpdate(dbSubscription._id, {
       status: subscription.status as any,
-      currentPeriodStart: new Date(periodStart * 1000),
+      currentPeriodStart: newPeriodStart,
       currentPeriodEnd: new Date(periodEnd * 1000),
       cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
       canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : undefined
     });
 
-    // Reset usage at period renewal - reload document to use instance methods
-    if (subscription.status === 'active') {
+    // Reset usage ONLY if period has renewed
+    if (periodRenewed && subscription.status === 'active') {
       const updatedSubscription = await Subscription.findById(dbSubscription._id);
       if (updatedSubscription && typeof (updatedSubscription as any).resetUsage === 'function') {
         await (updatedSubscription as any).resetUsage();
+        console.log(`Usage reset for subscription ${subscription.id} due to period renewal`);
       }
     }
 
@@ -271,6 +288,87 @@ export const cancelSubscription = async (userId: string): Promise<void> => {
 };
 
 /**
+ * Handle successful invoice payment
+ */
+export const handleInvoicePaymentSucceeded = async (invoice: Stripe.Invoice): Promise<void> => {
+  try {
+    // Cast invoice to access subscription property
+    const invoiceData = invoice as any;
+
+    // Only process subscription invoices
+    if (!invoiceData.subscription) {
+      console.log('Invoice payment succeeded for non-subscription invoice:', invoice.id);
+      return;
+    }
+
+    const subscriptionId = typeof invoiceData.subscription === 'string'
+      ? invoiceData.subscription
+      : invoiceData.subscription.id;
+
+    const dbSubscription = await Subscription.findOne({
+      stripeSubscriptionId: subscriptionId
+    });
+
+    if (!dbSubscription) {
+      console.error('Subscription not found for invoice:', invoice.id);
+      return;
+    }
+
+    // If this is a renewal payment (not the first invoice), reset usage
+    if (invoiceData.billing_reason === 'subscription_cycle') {
+      await dbSubscription.resetUsage();
+      console.log(`Usage reset for subscription ${subscriptionId} due to successful renewal payment`);
+    }
+
+    console.log(`Invoice payment succeeded:`, invoice.id);
+  } catch (error: any) {
+    console.error('Error handling invoice payment succeeded:', error);
+    throw error;
+  }
+};
+
+/**
+ * Handle failed invoice payment
+ */
+export const handleInvoicePaymentFailed = async (invoice: Stripe.Invoice): Promise<void> => {
+  try {
+    // Cast invoice to access subscription property
+    const invoiceData = invoice as any;
+
+    // Only process subscription invoices
+    if (!invoiceData.subscription) {
+      console.log('Invoice payment failed for non-subscription invoice:', invoice.id);
+      return;
+    }
+
+    const subscriptionId = typeof invoiceData.subscription === 'string'
+      ? invoiceData.subscription
+      : invoiceData.subscription.id;
+
+    const dbSubscription = await Subscription.findOne({
+      stripeSubscriptionId: subscriptionId
+    });
+
+    if (!dbSubscription) {
+      console.error('Subscription not found for invoice:', invoice.id);
+      return;
+    }
+
+    // Update subscription status if needed
+    // Stripe will automatically update status via subscription.updated webhook
+    // But we log it here for monitoring
+    console.error(`Payment failed for subscription ${subscriptionId}, invoice ${invoice.id}`);
+    console.error(`Next payment attempt will be made by Stripe automatically`);
+
+    // You could add user notification logic here
+    // await notifyUserOfPaymentFailure(dbSubscription.userId, invoice.id);
+  } catch (error: any) {
+    console.error('Error handling invoice payment failed:', error);
+    throw error;
+  }
+};
+
+/**
  * Check if user has active subscription with sufficient quota
  */
 export const checkSubscriptionQuota = async (userId: string): Promise<{
@@ -316,6 +414,8 @@ export default {
   handleSubscriptionCreated,
   handleSubscriptionUpdated,
   handleSubscriptionDeleted,
+  handleInvoicePaymentSucceeded,
+  handleInvoicePaymentFailed,
   getSubscriptionDetails,
   cancelSubscription,
   checkSubscriptionQuota

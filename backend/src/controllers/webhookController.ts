@@ -43,7 +43,19 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
         // Payment successful, subscription created
         const session = event.data.object as Stripe.Checkout.Session;
         console.log('Checkout session completed:', session.id);
-        // Subscription will be created via subscription.created event
+
+        // Handle subscription creation directly if subscription ID is available
+        if (session.subscription) {
+          try {
+            const subscription = await stripe.subscriptions.retrieve(
+              session.subscription as string
+            );
+            await stripeService.handleSubscriptionCreated(subscription);
+            console.log('Subscription created from checkout session');
+          } catch (err: any) {
+            console.error('Error creating subscription from checkout:', err.message);
+          }
+        }
         break;
 
       case 'customer.subscription.created':
@@ -67,14 +79,20 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
       case 'invoice.payment_succeeded':
         // Successful payment (initial or recurring)
         const invoice = event.data.object as Stripe.Invoice;
-        console.log('Payment succeeded for invoice:', invoice.id);
+        await stripeService.handleInvoicePaymentSucceeded(invoice);
         break;
 
       case 'invoice.payment_failed':
         // Failed payment
         const failedInvoice = event.data.object as Stripe.Invoice;
-        console.log('Payment failed for invoice:', failedInvoice.id);
-        // You might want to notify the user or update subscription status
+        await stripeService.handleInvoicePaymentFailed(failedInvoice);
+        break;
+
+      case 'checkout.session.expired':
+        // Checkout session expired without payment
+        const expiredSession = event.data.object as Stripe.Checkout.Session;
+        console.log('Checkout session expired:', expiredSession.id);
+        // Could add cleanup logic here if needed
         break;
 
       default:
