@@ -70,13 +70,30 @@ For LEGITIMATE documents:
   "suggestions": ["<suggestion 1>", "<suggestion 2>", ...]
 }
 
-SCORING GUIDELINES:
-- Each checkpoint should be scored individually (0-100)
-- Overall score is weighted average based on required vs optional documents
-- Required documents have higher weight
-- Missing required documents should significantly lower the score
+SCORING GUIDELINES - BE HIGHLY CRITICAL:
+⚠️ IMPORTANT: You are evaluating STUDENT visa applications. Be VERY critical and thorough.
 
-BEGIN ANALYSIS - Remember to check for malicious content first!`;
+STRICT SCORING RULES:
+1. MAXIMUM POSSIBLE SCORE IS 85/100 - Even perfect applications should not exceed 85
+2. Each checkpoint should be scored individually (0-85, NOT 0-100)
+3. Overall score is weighted average based on required vs optional documents
+4. Required documents have significantly higher weight than optional ones
+5. Missing required documents should result in automatic score below 50
+6. Be highly critical of incomplete information or missing details
+7. Deduct points for ANY gaps, inconsistencies, or unclear information
+8. If experience/qualifications seem exaggerated without solid proof, deduct heavily
+9. Generic or template-like content should receive lower scores
+10. Professional formatting and completeness matter - penalize poor presentation
+
+CRITICAL EVALUATION MINDSET:
+- Assume the applicant needs to prove EVERY claim with concrete evidence
+- Look for gaps in employment history, education timeline, or financial proof
+- Question any claims that seem too good to be true
+- Be skeptical of generic statements without specific examples
+- Even strong applications should receive constructive criticism
+- Maximum score of 85 reflects that NO application is perfect
+
+BEGIN ANALYSIS - Remember to check for malicious content first, then evaluate CRITICALLY!`;
 
   return systemPrompt;
 }
@@ -125,6 +142,12 @@ export function validateLLMResponse(response: string): any {
       throw new Error('Missing or invalid score field');
     }
 
+    // Cap score at 85 (maximum allowed)
+    if (parsed.score > 85) {
+      console.warn(`⚠️  Score ${parsed.score} exceeds maximum of 85, capping it`);
+      parsed.score = 85;
+    }
+
     if (typeof parsed.summary !== 'string') {
       throw new Error('Missing or invalid summary field');
     }
@@ -149,6 +172,12 @@ export function validateLLMResponse(response: string): any {
         const validStatuses = ['met', 'partially_met', 'not_met', 'not_applicable'];
         if (!validStatuses.includes(checkpoint.status)) {
           throw new Error(`Invalid checkpoint status: ${checkpoint.status}`);
+        }
+
+        // Cap individual checkpoint scores at 85
+        if (checkpoint.score !== undefined && checkpoint.score > 85) {
+          console.warn(`⚠️  Checkpoint score ${checkpoint.score} exceeds maximum of 85, capping it`);
+          checkpoint.score = 85;
         }
       }
     }

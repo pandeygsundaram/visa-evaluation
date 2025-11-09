@@ -196,13 +196,28 @@ export const getSubscriptionUsage = async (req: AuthRequest, res: Response) => {
       // User is on free plan or has no subscription
       const freePlan = await Plan.findOne({ tier: 'free', billingPeriod: 'monthly' });
 
+      // Count evaluations for this month
+      const Evaluation = require('../models/Evaluation').default;
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const evaluationCount = await Evaluation.countDocuments({
+        userId,
+        createdAt: { $gte: startOfMonth }
+      });
+
+      const callsLimit = freePlan?.callLimit || 2;
+      const callsRemaining = Math.max(0, callsLimit - evaluationCount);
+      const usagePercentage = callsLimit > 0 ? (evaluationCount / callsLimit) * 100 : 0;
+
       return res.json({
         success: true,
         data: {
-          callsUsed: 0,
-          callsLimit: freePlan?.callLimit || 5,
-          callsRemaining: freePlan?.callLimit || 5,
-          usagePercentage: 0,
+          callsUsed: evaluationCount,
+          callsLimit,
+          callsRemaining,
+          usagePercentage: Math.round(usagePercentage * 100) / 100,
           plan: freePlan
         }
       });

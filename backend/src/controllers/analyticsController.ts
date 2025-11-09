@@ -19,58 +19,119 @@ export const getUsageAnalytics = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Import Evaluation model
+    const Evaluation = require('../models/Evaluation').default;
+
     // Build query
     const query: any = { userId };
 
     // Filter by date range if provided
     if (startDate || endDate) {
-      query.timestamp = {};
+      query.createdAt = {};
       if (startDate) {
-        query.timestamp.$gte = new Date(startDate as string);
+        query.createdAt.$gte = new Date(startDate as string);
       }
       if (endDate) {
-        query.timestamp.$lte = new Date(endDate as string);
+        query.createdAt.$lte = new Date(endDate as string);
       }
     }
 
-    // Filter by specific API key if provided
+    // Get evaluation records (primary usage)
+    const evaluationRecords = await Evaluation.find(query)
+      .sort({ createdAt: -1 })
+      .limit(1000);
+
+    console.log(`📊 Found ${evaluationRecords.length} evaluations for user ${userId}`);
+
+    // Also get API usage records if they exist
+    const apiQuery: any = { userId };
+    if (startDate || endDate) {
+      apiQuery.timestamp = {};
+      if (startDate) {
+        apiQuery.timestamp.$gte = new Date(startDate as string);
+      }
+      if (endDate) {
+        apiQuery.timestamp.$lte = new Date(endDate as string);
+      }
+    }
     if (apiKey) {
-      query.apiKey = apiKey;
+      apiQuery.apiKey = apiKey;
     }
 
-    // Get usage records
-    const usageRecords = await ApiUsage.find(query)
+    const apiUsageRecords = await ApiUsage.find(apiQuery)
       .sort({ timestamp: -1 })
       .limit(1000);
 
-    // Calculate statistics
-    const totalCalls = usageRecords.length;
-    const successfulCalls = usageRecords.filter(r => r.success).length;
+    // Calculate statistics from evaluations
+    const totalCalls = evaluationRecords.length + apiUsageRecords.length;
+    //@ts-ignore
+    const successfulEvaluations = evaluationRecords.filter(e => e.status === 'completed').length;
+    const successfulApiCalls = apiUsageRecords.filter(r => r.success).length;
+    const successfulCalls = successfulEvaluations + successfulApiCalls;
     const failedCalls = totalCalls - successfulCalls;
-    const averageResponseTime = usageRecords.length > 0
-      ? usageRecords.reduce((sum, r) => sum + (r.responseTime || 0), 0) / usageRecords.length
+
+    const averageResponseTime = apiUsageRecords.length > 0
+      ? apiUsageRecords.reduce((sum, r) => sum + (r.responseTime || 0), 0) / apiUsageRecords.length
       : 0;
 
-    // Group by date
+    // Group evaluations by date
     const callsByDate: { [key: string]: number } = {};
-    usageRecords.forEach(record => {
+    //@ts-ignore
+    evaluationRecords.forEach(record => {
+      const date = record.createdAt.toISOString().split('T')[0];
+      callsByDate[date] = (callsByDate[date] || 0) + 1;
+    });
+    apiUsageRecords.forEach(record => {
       const date = record.timestamp.toISOString().split('T')[0];
       callsByDate[date] = (callsByDate[date] || 0) + 1;
     });
 
-    // Group by endpoint
+    // Group by type (evaluations vs API calls)
     const callsByEndpoint: { [key: string]: number } = {};
-    usageRecords.forEach(record => {
+    if (evaluationRecords.length > 0) {
+      callsByEndpoint['Evaluations'] = evaluationRecords.length;
+    }
+    apiUsageRecords.forEach(record => {
       callsByEndpoint[record.endpoint] = (callsByEndpoint[record.endpoint] || 0) + 1;
     });
 
+    console.log(`📊 callsByDate entries: ${Object.keys(callsByDate).length}`);
+    console.log(`📊 callsByEndpoint entries: ${Object.keys(callsByEndpoint).length}`);
+
     // Group by status code
-    const callsByStatus: { [key: number]: number } = {};
-    usageRecords.forEach(record => {
+    const callsByStatus: { [key: number]: number } = {
+      200: successfulEvaluations, // Evaluations as HTTP 200
+    };
+    apiUsageRecords.forEach(record => {
       callsByStatus[record.statusCode] = (callsByStatus[record.statusCode] || 0) + 1;
     });
 
-    res.json({
+    // Recent calls combining both
+    const recentEvaluations = evaluationRecords.slice(0, 25).map((e: any) => ({
+      timestamp: e.createdAt,
+      endpoint: `/api/evaluation/create`,
+      method: 'POST',
+      statusCode: e.status === 'completed' ? 200 : e.status === 'failed' ? 500 : 202,
+      success: e.status === 'completed',
+      responseTime: undefined,
+      ipAddress: undefined
+    }));
+
+    const recentApiCalls = apiUsageRecords.slice(0, 25).map(r => ({
+      timestamp: r.timestamp,
+      endpoint: r.endpoint,
+      method: r.method,
+      statusCode: r.statusCode,
+      success: r.success,
+      responseTime: r.responseTime,
+      ipAddress: r.ipAddress
+    }));
+
+    const allRecentCalls = [...recentEvaluations, ...recentApiCalls]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 50);
+
+    const responseData = {
       success: true,
       data: {
         summary: {
@@ -85,17 +146,13 @@ export const getUsageAnalytics = async (req: AuthRequest, res: Response) => {
           callsByEndpoint,
           callsByStatus
         },
-        recentCalls: usageRecords.slice(0, 50).map(r => ({
-          timestamp: r.timestamp,
-          endpoint: r.endpoint,
-          method: r.method,
-          statusCode: r.statusCode,
-          success: r.success,
-          responseTime: r.responseTime,
-          ipAddress: r.ipAddress
-        }))
+        recentCalls: allRecentCalls
       }
-    });
+    };
+
+    console.log(`📊 Sending response with ${Object.keys(callsByDate).length} date entries, ${Object.keys(callsByEndpoint).length} endpoint entries`);
+
+    res.json(responseData);
   } catch (error: any) {
     console.error('Error fetching usage analytics:', error);
     res.status(500).json({
@@ -167,13 +224,14 @@ export const getUsageSummary = async (req: AuthRequest, res: Response) => {
       const endOfMonth = new Date(startOfMonth);
       endOfMonth.setMonth(endOfMonth.getMonth() + 1);
 
-      const freeUsageCount = await ApiUsage.countDocuments({
+      // Count evaluations for free users
+      const Evaluation = require('../models/Evaluation').default;
+      const freeUsageCount = await Evaluation.countDocuments({
         userId,
-        timestamp: { $gte: startOfMonth },
-        success: true
+        createdAt: { $gte: startOfMonth }
       });
 
-      const FREE_PLAN_LIMIT = 5;
+      const FREE_PLAN_LIMIT = 2;
       const callsRemaining = Math.max(0, FREE_PLAN_LIMIT - freeUsageCount);
       const usagePercentage = (freeUsageCount / FREE_PLAN_LIMIT * 100).toFixed(1);
 

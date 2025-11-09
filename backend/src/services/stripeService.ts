@@ -385,11 +385,28 @@ export const checkSubscriptionQuota = async (userId: string): Promise<{
     }).populate('planId');
 
     if (!subscription) {
+      // Check if user should be on free plan
+      const freePlan = await Plan.findOne({ tier: 'free', billingPeriod: 'monthly' });
+      if (!freePlan) {
+        throw new Error('Free plan not found');
+      }
+
+      // For free tier users, check how many evaluations they've used this month
+      const Evaluation = require('../models/Evaluation').default;
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const evaluationCount = await Evaluation.countDocuments({
+        userId,
+        createdAt: { $gte: startOfMonth }
+      });
+
       return {
-        hasQuota: false,
+        hasQuota: evaluationCount < freePlan.callLimit,
         subscription: null,
-        plan: null,
-        callsRemaining: 0
+        plan: freePlan,
+        callsRemaining: Math.max(0, freePlan.callLimit - evaluationCount)
       };
     }
 
@@ -408,6 +425,31 @@ export const checkSubscriptionQuota = async (userId: string): Promise<{
   }
 };
 
+/**
+ * Increment subscription usage count
+ */
+export const incrementSubscriptionUsage = async (userId: string): Promise<void> => {
+  try {
+    const subscription = await Subscription.findOne({
+      userId,
+      status: 'active',
+      currentPeriodEnd: { $gte: new Date() }
+    });
+
+    if (subscription) {
+      subscription.callsUsed += 1;
+      await subscription.save();
+      console.log(`✅ Incremented subscription usage: ${subscription.callsUsed}/${(subscription.planId as any).callLimit}`);
+    } else {
+      // Free tier users don't have subscription records, usage is tracked by counting evaluations
+      console.log(`ℹ️  User ${userId} is on free tier, usage tracked via evaluation count`);
+    }
+  } catch (error: any) {
+    console.error('Error incrementing subscription usage:', error);
+    throw new Error(`Failed to increment subscription usage: ${error.message}`);
+  }
+};
+
 export default {
   getOrCreateStripeCustomer,
   createCheckoutSession,
@@ -418,5 +460,6 @@ export default {
   handleInvoicePaymentFailed,
   getSubscriptionDetails,
   cancelSubscription,
-  checkSubscriptionQuota
+  checkSubscriptionQuota,
+  incrementSubscriptionUsage
 };
