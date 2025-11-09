@@ -15,15 +15,15 @@ export default function ApiDocsPage() {
 
   const examples = {
     curl: {
-      authentication: `curl -X POST https://api.visaeval.com/api/evaluations \\
+      authentication: `curl -X POST https://backend.visaeval.live/api/evaluations \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: multipart/form-data" \\
   -F "country=USA" \\
   -F "visaType=H1B" \\
   -F "documents=@/path/to/resume.pdf"`,
-      getEvaluations: `curl -X GET https://api.visaeval.com/api/evaluations \\
+      getEvaluations: `curl -X GET https://backend.visaeval.live/api/evaluations \\
   -H "Authorization: Bearer YOUR_API_KEY"`,
-      getEvaluationById: `curl -X GET https://api.visaeval.com/api/evaluations/{evaluationId} \\
+      getEvaluationById: `curl -X GET https://backend.visaeval.live/api/evaluations/{evaluationId} \\
   -H "Authorization: Bearer YOUR_API_KEY"`,
     },
     javascript: {
@@ -32,7 +32,7 @@ formData.append('country', 'USA');
 formData.append('visaType', 'H1B');
 formData.append('documents', fileInput.files[0]);
 
-const response = await fetch('https://api.visaeval.com/api/evaluations', {
+const response = await fetch('https://backend.visaeval.live/api/evaluations', {
   method: 'POST',
   headers: {
     'Authorization': 'Bearer YOUR_API_KEY'
@@ -42,7 +42,7 @@ const response = await fetch('https://api.visaeval.com/api/evaluations', {
 
 const data = await response.json();
 console.log(data);`,
-      getEvaluations: `const response = await fetch('https://api.visaeval.com/api/evaluations', {
+      getEvaluations: `const response = await fetch('https://backend.visaeval.live/api/evaluations', {
   headers: {
     'Authorization': 'Bearer YOUR_API_KEY'
   }
@@ -51,7 +51,7 @@ console.log(data);`,
 const data = await response.json();
 console.log(data.data.evaluations);`,
       getEvaluationById: `const evaluationId = 'YOUR_EVALUATION_ID';
-const response = await fetch(\`https://api.visaeval.com/api/evaluations/\${evaluationId}\`, {
+const response = await fetch(\`https://backend.visaeval.live/api/evaluations/\${evaluationId}\`, {
   headers: {
     'Authorization': 'Bearer YOUR_API_KEY'
   }
@@ -63,7 +63,7 @@ console.log(data.data);`,
     python: {
       authentication: `import requests
 
-url = "https://api.visaeval.com/api/evaluations"
+url = "https://backend.visaeval.live/api/evaluations"
 headers = {
     "Authorization": "Bearer YOUR_API_KEY"
 }
@@ -79,7 +79,7 @@ response = requests.post(url, headers=headers, files=files, data=data)
 print(response.json())`,
       getEvaluations: `import requests
 
-url = "https://api.visaeval.com/api/evaluations"
+url = "https://backend.visaeval.live/api/evaluations"
 headers = {
     "Authorization": "Bearer YOUR_API_KEY"
 }
@@ -89,7 +89,7 @@ print(response.json())`,
       getEvaluationById: `import requests
 
 evaluation_id = "YOUR_EVALUATION_ID"
-url = f"https://api.visaeval.com/api/evaluations/{evaluation_id}"
+url = f"https://backend.visaeval.live/api/evaluations/{evaluation_id}"
 headers = {
     "Authorization": "Bearer YOUR_API_KEY"
 }
@@ -123,7 +123,7 @@ print(response.json())`,
           </p>
           <div className="bg-[var(--muted)] rounded-lg p-4 border-l-4 border-[var(--primary)]">
             <p className="font-semibold text-[var(--foreground)] mb-2">Base URL</p>
-            <code className="text-sm font-mono text-[var(--primary)]">https://api.visaeval.com</code>
+            <code className="text-sm font-mono text-[var(--primary)]">https://backend.visaeval.live</code>
           </div>
         </div>
       </section>
