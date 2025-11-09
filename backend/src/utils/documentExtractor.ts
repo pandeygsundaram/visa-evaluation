@@ -1,7 +1,7 @@
 import mammoth from 'mammoth';
 import { Buffer } from 'buffer';
 // @ts-ignore - pdfjs-dist types are incomplete
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
 
 export interface ExtractedDocument {
   text: string;
