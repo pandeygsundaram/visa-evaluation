@@ -30,13 +30,13 @@ const seedPlans = async () => {
         tier: 'free' as const,
         price: 0,
         billingPeriod: 'monthly' as const,
-        callLimit: 5,
+        callLimit: 2,
         modelAccess: {
           gpt4oMini: true,
           gpt4o: false
         },
         features: [
-          '5 evaluations per month',
+          '2 evaluations per month',
           'GPT-4o-mini model',
           'Basic features',
           'Community support'

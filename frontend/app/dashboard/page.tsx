@@ -1,20 +1,64 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useVisaStore } from '@/lib/stores/visaStore';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
-import { Globe, Key, FileText, Calendar } from 'lucide-react';
+import { Globe, Key, FileText, Calendar, Zap, TrendingUp } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const { countries, fetchCountries } = useVisaStore();
+  const router = useRouter();
+  const [quotaInfo, setQuotaInfo] = useState<any>(null);
+  const [loadingQuota, setLoadingQuota] = useState(true);
+  const [evaluationsCount, setEvaluationsCount] = useState(0);
+  const [loadingEvaluations, setLoadingEvaluations] = useState(true);
 
   useEffect(() => {
     fetchCountries();
+    fetchQuotaInfo();
+    fetchEvaluationsCount();
   }, [fetchCountries]);
+
+  const fetchQuotaInfo = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/usage`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setQuotaInfo(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching quota:', error);
+    } finally {
+      setLoadingQuota(false);
+    }
+  };
+
+  const fetchEvaluationsCount = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/evaluations`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setEvaluationsCount(data.data?.evaluations?.length || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching evaluations:', error);
+    } finally {
+      setLoadingEvaluations(false);
+    }
+  };
 
   const stats = [
     {
@@ -31,9 +75,9 @@ export default function DashboardPage() {
     },
     {
       name: 'Evaluations',
-      value: user?.evaluations?.length || 0,
+      value: loadingEvaluations ? '...' : evaluationsCount,
       icon: FileText,
-      href: '/dashboard',
+      href: '/dashboard/evaluations',
     },
   ];
 
@@ -47,6 +91,64 @@ export default function DashboardPage() {
           Here's an overview of your visa evaluation journey
         </p>
       </div>
+
+      {/* Subscription/Quota Card */}
+      {!loadingQuota && quotaInfo && (
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-[var(--foreground)]">
+                  {quotaInfo.plan?.name || 'Free'} Plan
+                </h2>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  {quotaInfo.callsRemaining} of {quotaInfo.callsLimit} evaluations remaining this month
+                </p>
+              </div>
+              {quotaInfo.plan?.tier === 'free' && (
+                <button
+                  onClick={() => router.push('/pricing')}
+                  className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg hover:opacity-90 transition-opacity text-sm font-medium"
+                >
+                  <Zap className="w-4 h-4" />
+                  Upgrade
+                </button>
+              )}
+            </div>
+          </CardHeader>
+          <CardBody>
+            <div className="space-y-4">
+              <div className="w-full bg-[var(--muted)] rounded-full h-3">
+                <div
+                  className={`h-3 rounded-full transition-all ${
+                    quotaInfo.callsRemaining === 0
+                      ? 'bg-[var(--error)]'
+                      : quotaInfo.callsRemaining <= 1
+                      ? 'bg-[var(--warning)]'
+                      : 'bg-[var(--success)]'
+                  }`}
+                  style={{ width: `${(quotaInfo.callsRemaining / quotaInfo.callsLimit) * 100}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[var(--muted-foreground)]">
+                  {quotaInfo.callsUsed} used
+                </span>
+                <span className="text-[var(--muted-foreground)]">
+                  {quotaInfo.callsRemaining} remaining
+                </span>
+              </div>
+              {quotaInfo.plan?.tier === 'free' && quotaInfo.callsRemaining <= 1 && (
+                <div className="mt-4 p-3 bg-[var(--warning)]/10 border border-[var(--warning)] rounded-lg">
+                  <p className="text-sm text-[var(--foreground)]">
+                    You're running low on evaluations! Upgrade to Pro for thousands of evaluations per month.
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         {stats.map((stat) => {
