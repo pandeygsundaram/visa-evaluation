@@ -13,8 +13,20 @@ import {
   LogOut,
   Menu,
   X,
+  FileText,
+  Activity,
+  BookOpen,
+  ChevronDown,
 } from 'lucide-react';
 import { useState } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/DropdownMenu';
 
 export function Navbar() {
   const router = useRouter();
@@ -29,8 +41,11 @@ export function Navbar() {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Evaluations', href: '/dashboard/evaluations', icon: FileText },
     { name: 'Visa Explorer', href: '/dashboard/visa-config', icon: Globe },
     { name: 'API Keys', href: '/dashboard/api-keys', icon: Key },
+    { name: 'API Usage', href: '/dashboard/api-usage', icon: Activity },
+    { name: 'API Docs', href: '/dashboard/api-docs', icon: BookOpen },
     { name: 'Profile', href: '/dashboard/profile', icon: User },
   ];
 
@@ -38,51 +53,69 @@ export function Navbar() {
     <nav className="bg-[var(--card)] border-b border-[var(--border)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link href="/dashboard" className="text-xl font-bold text-[var(--primary)]">
-                Visa Evaluation
-              </Link>
-            </div>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'border-[var(--primary)] text-[var(--foreground)]'
-                        : 'border-transparent text-[var(--muted-foreground)] hover:border-[var(--border)] hover:text-[var(--foreground)]'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </div>
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link href="/dashboard" className="text-xl font-bold text-[var(--primary)]">
+              Visa Evaluation
+            </Link>
           </div>
 
-          <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            <div className="flex items-center space-x-4">
-              <ThemeToggle />
-              <span className="text-sm text-[var(--foreground)]">{user?.name}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="flex items-center"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
+          {/* Desktop Navigation - Right Side */}
+          <div className="hidden md:flex md:items-center md:space-x-4">
+            <ThemeToggle />
+
+            {/* User Dropdown Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-[var(--muted)] transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center">
+                    <span className="text-sm font-semibold text-[var(--primary-foreground)]">
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium text-[var(--foreground)]">{user?.name}</span>
+                  <ChevronDown className="w-4 h-4 text-[var(--muted-foreground)]" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>
+                  <div>
+                    <p className="font-medium text-[var(--foreground)]">{user?.name}</p>
+                    <p className="text-xs text-[var(--muted-foreground)] truncate">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                {navigation.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <DropdownMenuItem
+                      key={item.name}
+                      onClick={() => router.push(item.href)}
+                      className={isActive ? 'bg-[var(--muted)] text-[var(--primary)]' : ''}
+                    >
+                      <div className="flex items-center">
+                        <Icon className="w-4 h-4 mr-3" />
+                        {item.name}
+                      </div>
+                    </DropdownMenuItem>
+                  );
+                })}
+
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-[var(--error)]">
+                  <div className="flex items-center">
+                    <LogOut className="w-4 h-4 mr-3" />
+                    Logout
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          <div className="flex items-center sm:hidden">
+          {/* Mobile menu button */}
+          <div className="flex items-center md:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
@@ -97,8 +130,9 @@ export function Navbar() {
         </div>
       </div>
 
+      {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="sm:hidden bg-[var(--card)]">
+        <div className="md:hidden bg-[var(--card)]">
           <div className="pt-2 pb-3 space-y-1">
             {navigation.map((item) => {
               const Icon = item.icon;
@@ -125,7 +159,11 @@ export function Navbar() {
           <div className="pt-4 pb-3 border-t border-[var(--border)]">
             <div className="flex items-center px-4">
               <div className="flex-shrink-0">
-                <User className="h-10 w-10 text-[var(--muted-foreground)]" />
+                <div className="w-10 h-10 rounded-full bg-[var(--primary)] flex items-center justify-center">
+                  <span className="text-lg font-semibold text-[var(--primary-foreground)]">
+                    {user?.name?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
               </div>
               <div className="ml-3">
                 <div className="text-base font-medium text-[var(--foreground)]">
@@ -146,7 +184,7 @@ export function Navbar() {
               <Button
                 variant="ghost"
                 onClick={handleLogout}
-                className="w-full flex items-center justify-start"
+                className="w-full flex items-center justify-start text-[var(--error)]"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout

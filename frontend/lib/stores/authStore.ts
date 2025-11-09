@@ -33,14 +33,13 @@ export const useAuthStore = create<AuthState>()(
 
       setToken: (token) => {
         if (token) {
-          localStorage.setItem('auth_token', token);
-          // Also set cookie for middleware
+          // Set cookie for middleware (optional, if you use server-side auth)
           document.cookie = `auth_token=${token}; path=/; max-age=604800`; // 7 days
         } else {
-          localStorage.removeItem('auth_token');
           // Remove cookie
           document.cookie = 'auth_token=; path=/; max-age=0';
         }
+        // Zustand persist will handle localStorage automatically
         set({ token });
       },
 
@@ -103,11 +102,20 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      initialize: () => {
+      initialize: async () => {
         // On app initialization, sync token from localStorage to cookie
         const state = get();
         if (state.token && typeof document !== 'undefined') {
           document.cookie = `auth_token=${state.token}; path=/; max-age=604800`;
+
+          // Refresh user profile to ensure we have latest data
+          try {
+            await get().refreshProfile();
+          } catch (error) {
+            console.error('Failed to refresh profile on init:', error);
+            // If token is invalid, clear auth state
+            get().logout();
+          }
         }
       },
     }),
@@ -118,6 +126,15 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        // After rehydration, if we have a token, ensure isAuthenticated is true
+        if (state?.token && state?.user) {
+          console.log('✅ Auth state rehydrated from localStorage');
+          state.isAuthenticated = true;
+        } else {
+          console.log('❌ No auth state found in localStorage');
+        }
+      },
     }
   )
 );

@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
+import { AuthNavbar } from '@/components/auth/AuthNavbar';
 
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -50,18 +51,20 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Visa Evaluation Platform
-          </h1>
-          <p className="mt-2 text-gray-600">Create your account</p>
-        </div>
+    <>
+      <AuthNavbar />
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)] pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-[var(--foreground)]">
+              Visa Evaluation Platform
+            </h1>
+            <p className="mt-2 text-[var(--muted-foreground)]">Create your account</p>
+          </div>
 
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-semibold text-gray-900">Sign Up</h2>
+            <h2 className="text-xl font-semibold text-[var(--foreground)]">Sign Up</h2>
           </CardHeader>
           <CardBody>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -109,10 +112,10 @@ export default function SignupPage() {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
+                  <div className="w-full border-t border-[var(--border)]" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">
+                  <span className="px-2 bg-[var(--card)] text-[var(--muted-foreground)]">
                     Or continue with
                   </span>
                 </div>
@@ -149,11 +152,11 @@ export default function SignupPage() {
             </div>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[var(--muted-foreground)]">
                 Already have an account?{' '}
                 <Link
                   href="/login"
-                  className="font-medium text-blue-600 hover:text-blue-500"
+                  className="font-medium text-[var(--primary)] hover:opacity-80"
                 >
                   Sign in
                 </Link>
@@ -163,5 +166,6 @@ export default function SignupPage() {
         </Card>
       </div>
     </div>
+    </>
   );
 }
