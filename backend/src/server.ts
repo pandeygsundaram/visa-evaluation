@@ -2,17 +2,28 @@ import express, { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+dotenv.config();
 import authRoutes from './routes/auth';
 import visaConfigRoutes from './routes/visaConfig';
+import evaluationRoutes from './routes/evaluation';
 
 // Load environment variables
-dotenv.config();
+
+// DEBUG: Check if env vars are loaded
+console.log('=== ENVIRONMENT VARIABLES CHECK ===');
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
+console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? '✓ EXISTS' : '✗ MISSING');
+console.log('BACKEND_URL:', process.env.BACKEND_URL);
+console.log('===================================');
 
 // Initialize Express app
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -34,6 +45,7 @@ app.get('/health', (req: Request, res: Response) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/visa-config', visaConfigRoutes);
+app.use('/api/evaluations', evaluationRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
@@ -96,6 +108,8 @@ const startServer = async () => {
     console.log('Available endpoints:');
     console.log('  POST   /api/auth/signup');
     console.log('  POST   /api/auth/login');
+    console.log('  GET    /api/auth/google/login (Initiate Google OAuth)');
+    console.log('  GET    /api/auth/google (Google OAuth callback)');
     console.log('  POST   /api/auth/generate-api-key');
     console.log('  GET    /api/auth/api-keys');
     console.log('  GET    /api/auth/me');
@@ -103,6 +117,10 @@ const startServer = async () => {
     console.log('  GET    /api/visa-config');
     console.log('  GET    /api/visa-config/:countryCode');
     console.log('  GET    /api/visa-config/:countryCode/:visaCode');
+    console.log('  POST   /api/evaluations (Upload documents for evaluation)');
+    console.log('  GET    /api/evaluations (Get user evaluations)');
+    console.log('  GET    /api/evaluations/:id (Get evaluation by ID)');
+    console.log('  DELETE /api/evaluations/:id (Delete evaluation)');
     console.log('================================');
     console.log('');
   });

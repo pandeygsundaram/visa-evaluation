@@ -2,16 +2,30 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IDocument {
   type: string; // e.g., 'resume', 'personal_statement', 'police_report', etc.
-  url: string; // Cloudflare link
+  url?: string; // Optional - signed URLs generated on-demand from r2Key
+  r2Key: string; // R2 storage key for the file
+  fileName: string; // Original file name
   uploadedAt: Date;
 }
 
+export interface ICheckpointAnalysis {
+  checkpoint: string; // The checking point/requirement name
+  status: 'met' | 'partially_met' | 'not_met' | 'not_applicable';
+  evidence?: string; // Evidence found in the document
+  feedback?: string; // Specific feedback for this checkpoint
+  score?: number; // Individual score for this checkpoint
+}
+
 export interface IEvaluationResult {
+  isMalicious: boolean; // Flag for malicious content detection
+  maliciousReason?: string; // Reason if marked as malicious
   score: number; // 0-100
   summary: string;
+  checkpoints?: ICheckpointAnalysis[]; // Detailed checkpoint analysis
   suggestions?: string[];
   strengths?: string[];
   weaknesses?: string[];
+  rawAnalysis?: string; // Raw LLM response for debugging
 }
 
 export interface IEvaluation extends Document {
@@ -33,6 +47,15 @@ const DocumentSchema = new Schema<IDocument>({
   },
   url: {
     type: String,
+    required: false, // Not required - signed URLs generated on-demand
+    default: ''
+  },
+  r2Key: {
+    type: String,
+    required: true
+  },
+  fileName: {
+    type: String,
     required: true
   },
   uploadedAt: {
@@ -41,7 +64,28 @@ const DocumentSchema = new Schema<IDocument>({
   }
 });
 
+const CheckpointAnalysisSchema = new Schema<ICheckpointAnalysis>({
+  checkpoint: {
+    type: String,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ['met', 'partially_met', 'not_met', 'not_applicable'],
+    required: true
+  },
+  evidence: String,
+  feedback: String,
+  score: Number
+});
+
 const EvaluationResultSchema = new Schema<IEvaluationResult>({
+  isMalicious: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  maliciousReason: String,
   score: {
     type: Number,
     required: true,
@@ -52,9 +96,11 @@ const EvaluationResultSchema = new Schema<IEvaluationResult>({
     type: String,
     required: true
   },
+  checkpoints: [CheckpointAnalysisSchema],
   suggestions: [String],
   strengths: [String],
-  weaknesses: [String]
+  weaknesses: [String],
+  rawAnalysis: String
 });
 
 const EvaluationSchema = new Schema<IEvaluation>(

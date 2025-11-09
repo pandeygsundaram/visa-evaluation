@@ -13,6 +13,8 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  provider?: 'credentials' | 'google';
+  googleId?: string;
   apiKeys: IApiKey[];
   evaluations: mongoose.Types.ObjectId[]; // References to Evaluation documents
   createdAt: Date;
@@ -60,9 +62,34 @@ const UserSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
-      select: false // Don't include password in queries by default
+      required: function (this: IUser) {
+        return this.provider === 'credentials' || !this.provider;
+      },
+      select: false, // Don't include password in queries by default
+      validate: {
+        validator: function (this: IUser, value: string) {
+          // Skip validation for Google OAuth users
+          if (this.provider === 'google') {
+            return true;
+          }
+          // For credentials users, password must be at least 6 characters if provided
+          if (value && value.length < 6) {
+            return false;
+          }
+          return true;
+        },
+        message: 'Password must be at least 6 characters'
+      }
+    },
+    provider: {
+      type: String,
+      enum: ['credentials', 'google'],
+      default: 'credentials'
+    },
+    googleId: {
+      type: String,
+      sparse: true,
+      unique: true
     },
     apiKeys: [ApiKeySchema],
     evaluations: [
@@ -80,6 +107,11 @@ const UserSchema = new Schema<IUser>(
 // Hash password before saving
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
+    return next();
+  }
+
+  // Skip password hashing for OAuth users without password
+  if (this.provider === 'google' || !this.password) {
     return next();
   }
 

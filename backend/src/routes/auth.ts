@@ -3,6 +3,8 @@ import { body } from 'express-validator';
 import {
   signup,
   login,
+  initiateGoogleAuth,
+  handleGoogleCallback,
   generateApiKey,
   getApiKeys,
   deactivateApiKey,
@@ -50,6 +52,10 @@ const loginValidation = [
 // Public routes
 router.post('/signup', signupValidation, signup);
 router.post('/login', loginValidation, login);
+
+// Google OAuth routes
+router.get('/google/login', initiateGoogleAuth);
+router.get('/google', handleGoogleCallback);
 
 // Protected routes (require JWT token)
 router.post('/generate-api-key', verifyToken, generateApiKey);

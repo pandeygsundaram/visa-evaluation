@@ -2,9 +2,19 @@ import { Response } from 'express';
 import { validationResult } from 'express-validator';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
+import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User';
 import Evaluation from '../models/Evaluation';
 import { AuthRequest } from '../middleware/auth';
+import { getGoogleOAuthClient } from '../utils/googleOAuth';
+
+
+
+// DEBUG: Log what we're initializing with
+console.log('🔧 Initializing OAuth2Client...');
+console.log('  Client ID:', process.env.GOOGLE_CLIENT_ID);
+console.log('  Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? 'EXISTS' : 'MISSING');
+
 
 // Generate JWT token
 const generateToken = (userId: string, email: string): string => {
@@ -146,6 +156,106 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
       message: 'Error logging in',
       error: error.message
     });
+  }
+};
+
+// @desc    Initiate Google OAuth flow
+// @route   GET /api/auth/google/login
+// @access  Public
+export const initiateGoogleAuth = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const redirectUri = `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google`;
+    const googleClient = getGoogleOAuthClient();
+
+    const authUrl = googleClient.generateAuthUrl({
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email'
+      ],
+      redirect_uri:redirectUri
+    });
+
+    res.redirect(authUrl);
+  } catch (error: any) {
+    console.error('Google auth initiation error:', error);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_init_failed`);
+  }
+};
+
+// @desc    Handle Google OAuth callback
+// @route   GET /api/auth/google
+// @access  Public
+export const handleGoogleCallback = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { code } = req.query;
+
+    if (!code) {
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_code`);
+      return;
+    }
+
+    const googleClient = getGoogleOAuthClient();
+
+    const redirectUri = `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google`;
+
+    // Exchange authorization code for tokens
+    const { tokens } = await googleClient.getToken({
+      code: code as string,
+      redirect_uri: redirectUri  // ← KEEP THIS
+    });
+
+
+    if (!tokens.id_token) {
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_token`);
+      return;
+    }
+
+    // Verify the ID token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=invalid_token`);
+      return;
+    }
+
+    const { sub: googleId, email, name } = payload;
+
+    // Find or create user
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      // Create new user with Google OAuth
+      user = await User.create({
+        name: name || 'Google User',
+        email: email.toLowerCase(),
+        provider: 'google',
+        googleId,
+        password: '', // Empty password for OAuth users
+        apiKeys: [],
+        evaluations: []
+      });
+    } else {
+      // Update existing user with Google ID if not already linked
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.provider = 'google';
+        await user.save();
+      }
+    }
+
+    // Generate JWT token
+    const jwtToken = generateToken(String(user._id), user.email);
+
+    // Redirect to frontend with token
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/callback?token=${jwtToken}`);
+  } catch (error: any) {
+    console.error('Google auth callback error:', error);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`);
   }
 };
 
