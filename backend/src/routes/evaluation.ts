@@ -7,6 +7,7 @@ import {
   deleteEvaluation
 } from '../controllers/evaluationController';
 import { authenticate } from '../middleware/auth';
+import { validateApiKey, trackApiUsage } from '../middleware/apiKeyAuth';
 
 const router = express.Router();
 
@@ -33,7 +34,22 @@ const upload = multer({
   }
 });
 
-// All routes require authentication
+/**
+ * PUBLIC API ENDPOINT (API Key Authentication)
+ * POST /api/evaluations/public
+ * Create evaluation using API key
+ *
+ * Headers:
+ * - x-api-key: string (required)
+ *
+ * Body (multipart/form-data):
+ * - country: string (required)
+ * - visaType: string (required)
+ * - documents: File[] (required, at least 1)
+ */
+router.post('/public', validateApiKey, trackApiUsage, upload.array('documents', 10), createEvaluation);
+
+// All other routes require JWT authentication
 router.use(authenticate);
 
 /**

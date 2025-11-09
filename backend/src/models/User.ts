@@ -15,8 +15,10 @@ export interface IUser extends Document {
   password: string;
   provider?: 'credentials' | 'google';
   googleId?: string;
+  stripeCustomerId?: string; // Stripe customer ID
   apiKeys: IApiKey[];
   evaluations: mongoose.Types.ObjectId[]; // References to Evaluation documents
+  currentSubscription?: mongoose.Types.ObjectId; // Reference to active Subscription
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -91,13 +93,22 @@ const UserSchema = new Schema<IUser>(
       sparse: true,
       unique: true
     },
+    stripeCustomerId: {
+      type: String,
+      sparse: true,
+      index: true
+    },
     apiKeys: [ApiKeySchema],
     evaluations: [
       {
         type: Schema.Types.ObjectId,
         ref: 'Evaluation'
       }
-    ]
+    ],
+    currentSubscription: {
+      type: Schema.Types.ObjectId,
+      ref: 'Subscription'
+    }
   },
   {
     timestamps: true

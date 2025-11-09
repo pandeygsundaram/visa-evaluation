@@ -12,8 +12,17 @@ import { analyzeDocument, validateOpenAIConfig } from '../services/openaiService
 export const createEvaluation = async (req: Request, res: Response): Promise<void> => {
   try {
     const { country, visaType: visaCode } = req.body;
-    const userId = (req as any).user.id; // From auth middleware
+    // Support both JWT auth and API key auth
+    const userId = (req as any).user?.id || (req as any).apiKeyContext?.userId;
     const files = req.files as Express.Multer.File[];
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+      return;
+    }
 
     // Validation
     if (!country || !visaCode) {
