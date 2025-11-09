@@ -1,5 +1,7 @@
 import mammoth from 'mammoth';
 import { Buffer } from 'buffer';
+// @ts-ignore - pdfjs-dist types are incomplete
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 export interface ExtractedDocument {
   text: string;
@@ -11,23 +13,41 @@ export interface ExtractedDocument {
 }
 
 /**
- * Extract text from PDF buffer
+ * Extract text from PDF buffer using pdfjs-dist (no native dependencies required)
  */
 export async function extractPdfText(buffer: Buffer, fileName?: string): Promise<ExtractedDocument> {
   try {
-    // Use PDFParse class from pdf-parse module
-    const { PDFParse } = require('pdf-parse');
-    const parser = new PDFParse({ data: buffer });
-    const result = await parser.getText();
+    // Load PDF document from buffer
+    const loadingTask = pdfjsLib.getDocument({
+      data: new Uint8Array(buffer),
+      useSystemFonts: true,
+      standardFontDataUrl: undefined,
+    });
 
-    // Clean up after parsing
-    await parser.destroy();
+    const pdfDocument = await loadingTask.promise;
+    const numPages = pdfDocument.numPages;
+    let fullText = '';
+
+    // Extract text from each page
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      const page = await pdfDocument.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => item.str)
+        .join(' ');
+      fullText += pageText + '\n';
+    }
+
+    // Clean up
+    await pdfDocument.destroy();
+
+    const cleanText = fullText.trim();
 
     return {
-      text: result.text,
+      text: cleanText,
       metadata: {
-        pages: result.pages?.length || 0,
-        wordCount: result.text.split(/\s+/).length,
+        pages: numPages,
+        wordCount: cleanText.split(/\s+/).filter(word => word.length > 0).length,
         fileName
       }
     };
