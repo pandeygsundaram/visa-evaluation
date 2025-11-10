@@ -16,11 +16,11 @@ export default function ApiDocsPage() {
   const examples = {
     curl: `curl -X POST https://backend.visaeval.live/api/evaluations/public \\
   -H "x-api-key: YOUR_API_KEY" \\
-  -F "country=USA" \\
+  -F "country=US" \\
   -F "visaType=H1B" \\
   -F "documents=@/path/to/resume.pdf"`,
     javascript: `const formData = new FormData();
-formData.append('country', 'USA');
+formData.append('country', 'US');
 formData.append('visaType', 'H1B');
 formData.append('documents', fileInput.files[0]);
 
@@ -44,7 +44,7 @@ files = {
     'documents': open('/path/to/resume.pdf', 'rb')
 }
 data = {
-    'country': 'USA',
+    'country': 'US',
     'visaType': 'H1B'
 }
 
@@ -152,13 +152,13 @@ print(response.json())`,
                   <td className="py-2 font-mono">country</td>
                   <td className="py-2">string</td>
                   <td className="py-2">Yes</td>
-                  <td className="py-2">Target country (e.g., "USA", "UK", "Canada")</td>
+                  <td className="py-2">Country code (e.g., "US", "DE", "IE") - See reference below</td>
                 </tr>
                 <tr className="border-b border-[var(--border)]">
                   <td className="py-2 font-mono">visaType</td>
                   <td className="py-2">string</td>
                   <td className="py-2">Yes</td>
-                  <td className="py-2">Visa type code (e.g., "H1B", "F1", "Skilled")</td>
+                  <td className="py-2">Visa type code (e.g., "H1B", "O1A", "EU_BLUE_CARD") - See reference below</td>
                 </tr>
                 <tr>
                   <td className="py-2 font-mono">documents</td>
@@ -259,6 +259,98 @@ print(response.json())`,
 }`}</code>
                   </pre>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Country and Visa Type Reference */}
+      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
+        <h2 className="text-2xl font-semibold text-[var(--foreground)] mb-4">Supported Countries & Visa Types</h2>
+        <p className="text-[var(--muted-foreground)] mb-6">
+          Use the following country codes and visa type codes in your API requests:
+        </p>
+
+        <div className="space-y-6">
+          {/* United States */}
+          <div className="border-l-4 border-[var(--primary)] pl-4">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">🇺🇸 United States (US)</h3>
+            <div className="space-y-2">
+              <div className="bg-[var(--muted)] rounded p-3">
+                <p className="font-mono text-sm text-[var(--primary)] mb-1">O1A</p>
+                <p className="text-sm text-[var(--muted-foreground)]">O-1A Visa - Extraordinary ability in sciences, education, business, or athletics</p>
+              </div>
+              <div className="bg-[var(--muted)] rounded p-3">
+                <p className="font-mono text-sm text-[var(--primary)] mb-1">O1B</p>
+                <p className="text-sm text-[var(--muted-foreground)]">O-1B Visa - Extraordinary ability in arts, motion picture, or television</p>
+              </div>
+              <div className="bg-[var(--muted)] rounded p-3">
+                <p className="font-mono text-sm text-[var(--primary)] mb-1">H1B</p>
+                <p className="text-sm text-[var(--muted-foreground)]">H-1B Visa - Specialty occupations requiring theoretical or technical expertise</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Germany */}
+          <div className="border-l-4 border-[var(--primary)] pl-4">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">🇩🇪 Germany (DE)</h3>
+            <div className="space-y-2">
+              <div className="bg-[var(--muted)] rounded p-3">
+                <p className="font-mono text-sm text-[var(--primary)] mb-1">EU_BLUE_CARD</p>
+                <p className="text-sm text-[var(--muted-foreground)]">EU Blue Card - Highly qualified professionals with university degree</p>
+              </div>
+              <div className="bg-[var(--muted)] rounded p-3">
+                <p className="font-mono text-sm text-[var(--primary)] mb-1">ICT_PERMIT</p>
+                <p className="text-sm text-[var(--muted-foreground)]">ICT Permit - Intra-corporate transferees</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Ireland */}
+          <div className="border-l-4 border-[var(--primary)] pl-4">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">🇮🇪 Ireland (IE)</h3>
+            <div className="space-y-2">
+              <div className="bg-[var(--muted)] rounded p-3">
+                <p className="font-mono text-sm text-[var(--primary)] mb-1">CSEP</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Critical Skills Employment Permit - Highly skilled workers in critical occupations</p>
+              </div>
+            </div>
+          </div>
+
+          {/* France */}
+          <div className="border-l-4 border-[var(--primary)] pl-4">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">🇫🇷 France (FR)</h3>
+            <div className="space-y-2">
+              <div className="bg-[var(--muted)] rounded p-3">
+                <p className="font-mono text-sm text-[var(--primary)] mb-1">TALENT_PASSPORT</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Talent Passport - Highly qualified professionals, researchers, and entrepreneurs</p>
+              </div>
+              <div className="bg-[var(--muted)] rounded p-3">
+                <p className="font-mono text-sm text-[var(--primary)] mb-1">SALARIE_MISSION</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Salarié en Mission - Employees on intra-company transfer</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Netherlands */}
+          <div className="border-l-4 border-[var(--primary)] pl-4">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">🇳🇱 Netherlands (NL)</h3>
+            <div className="space-y-2">
+              <div className="bg-[var(--muted)] rounded p-3">
+                <p className="font-mono text-sm text-[var(--primary)] mb-1">KNOWLEDGE_MIGRANT</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Knowledge Migrant Permit - Highly skilled migrants sponsored by recognised employer</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Poland */}
+          <div className="border-l-4 border-[var(--primary)] pl-4">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">🇵🇱 Poland (PL)</h3>
+            <div className="space-y-2">
+              <div className="bg-[var(--muted)] rounded p-3">
+                <p className="font-mono text-sm text-[var(--primary)] mb-1">WP_TYPE_C</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Work Permit Type C - Employees of foreign companies posted to Poland</p>
               </div>
             </div>
           </div>
