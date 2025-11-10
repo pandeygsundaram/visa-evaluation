@@ -187,12 +187,26 @@ export default function EvaluationsPage() {
                     <p
                       className="text-sm font-semibold"
                       style={{
-                        color: !evaluation.evaluationResult.isMalicious
+                        color: evaluation.evaluationResult.isMalicious
+                          ? 'var(--warning)'
+                          : evaluation.evaluationResult.score >= 70
                           ? 'var(--success)'
-                          : 'var(--warning)'
+                          : evaluation.evaluationResult.score >= 50
+                          ? 'var(--success)'
+                          : evaluation.evaluationResult.score >= 30
+                          ? 'var(--warning)'
+                          : 'var(--error)'
                       }}
                     >
-                      {!evaluation.evaluationResult.isMalicious ? 'Likely Eligible' : 'Needs Review'}
+                      {evaluation.evaluationResult.isMalicious
+                        ? 'Needs Review'
+                        : evaluation.evaluationResult.score >= 70
+                        ? 'Excellent'
+                        : evaluation.evaluationResult.score >= 50
+                        ? 'Good'
+                        : evaluation.evaluationResult.score >= 30
+                        ? 'Moderate'
+                        : 'Low'}
                     </p>
                   </div>
                 </div>
