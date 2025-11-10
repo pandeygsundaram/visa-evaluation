@@ -47,6 +47,7 @@ export default function ManageSubscriptionPage() {
   const [subscriptionDetails, setSubscriptionDetails] = useState<SubscriptionDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState(false);
+  const [loadingPortal, setLoadingPortal] = useState(false);
 
   useEffect(() => {
     fetchSubscriptionDetails();
@@ -102,6 +103,36 @@ export default function ManageSubscriptionPage() {
       toast.error('Failed to cancel subscription');
     } finally {
       setCanceling(false);
+    }
+  };
+
+  const handleManageBilling = async () => {
+    setLoadingPortal(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/billing-portal`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          returnUrl: `${window.location.origin}/dashboard/subscription/manage`
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.data.url) {
+        // Redirect to Stripe billing portal
+        window.location.href = data.data.url;
+      } else {
+        toast.error(data.message || 'Failed to open billing portal');
+      }
+    } catch (error) {
+      console.error('Error opening billing portal:', error);
+      toast.error('Failed to open billing portal');
+    } finally {
+      setLoadingPortal(false);
     }
   };
 
@@ -293,15 +324,23 @@ export default function ManageSubscriptionPage() {
                 <p className="text-sm text-[var(--foreground)] mb-2">
                   Payment method and billing details are managed securely through Stripe.
                 </p>
-                <a
-                  href={`https://billing.stripe.com/p/login/${process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_ID || 'test'}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium text-[var(--primary)] hover:opacity-80 inline-flex items-center"
+                <button
+                  onClick={handleManageBilling}
+                  disabled={loadingPortal}
+                  className="text-sm font-medium text-[var(--primary)] hover:opacity-80 inline-flex items-center disabled:opacity-50"
                 >
-                  Manage payment method
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </a>
+                  {loadingPortal ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                      Opening billing portal...
+                    </>
+                  ) : (
+                    <>
+                      Manage payment method
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </CardBody>
