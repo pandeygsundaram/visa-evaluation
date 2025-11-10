@@ -164,6 +164,18 @@ export const handleSubscriptionUpdated = async (subscription: Stripe.Subscriptio
       return;
     }
 
+    // Get the price ID from the subscription to find the updated plan
+    const priceId = subscription.items.data[0]?.price.id;
+    let updatedPlanId: any = dbSubscription.planId; // Default to current plan
+
+    if (priceId) {
+      const updatedPlan = await Plan.findOne({ stripePriceId: priceId });
+      if (updatedPlan) {
+        updatedPlanId = updatedPlan._id as any;
+        console.log(`Plan changed from ${dbSubscription.planId} to ${updatedPlanId}`);
+      }
+    }
+
     // Get period start and end
     const stripeSubscription = subscription as any;
     const periodStart = typeof stripeSubscription.current_period_start === 'number'
@@ -178,8 +190,9 @@ export const handleSubscriptionUpdated = async (subscription: Stripe.Subscriptio
     // Check if period has renewed (period start changed)
     const periodRenewed = newPeriodStart.getTime() !== dbSubscription.currentPeriodStart.getTime();
 
-    // Update subscription
+    // Update subscription with new plan ID
     await Subscription.findByIdAndUpdate(dbSubscription._id, {
+      planId: updatedPlanId,
       status: subscription.status as any,
       currentPeriodStart: newPeriodStart,
       currentPeriodEnd: new Date(periodEnd * 1000),

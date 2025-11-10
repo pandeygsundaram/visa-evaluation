@@ -24,6 +24,18 @@ export default function DashboardPage() {
     fetchEvaluationsCount();
   }, [fetchCountries]);
 
+  // Refresh quota info when user returns to the page (e.g., after upgrading)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchQuotaInfo();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const fetchQuotaInfo = async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/usage`, {

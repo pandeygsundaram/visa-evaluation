@@ -189,22 +189,22 @@ export default function EvaluationsPage() {
                       style={{
                         color: evaluation.evaluationResult.isMalicious
                           ? 'var(--warning)'
-                          : evaluation.evaluationResult.score >= 70
+                          : evaluation.evaluationResult.score >= 75
                           ? 'var(--success)'
-                          : evaluation.evaluationResult.score >= 50
-                          ? 'var(--success)'
-                          : evaluation.evaluationResult.score >= 30
+                          : evaluation.evaluationResult.score >= 60
+                          ? '#3b82f6'
+                          : evaluation.evaluationResult.score >= 40
                           ? 'var(--warning)'
                           : 'var(--error)'
                       }}
                     >
                       {evaluation.evaluationResult.isMalicious
                         ? 'Needs Review'
-                        : evaluation.evaluationResult.score >= 70
+                        : evaluation.evaluationResult.score >= 75
                         ? 'Excellent'
-                        : evaluation.evaluationResult.score >= 50
-                        ? 'Good'
-                        : evaluation.evaluationResult.score >= 30
+                        : evaluation.evaluationResult.score >= 60
+                        ? 'Likely Eligible'
+                        : evaluation.evaluationResult.score >= 40
                         ? 'Moderate'
                         : 'Low'}
                     </p>

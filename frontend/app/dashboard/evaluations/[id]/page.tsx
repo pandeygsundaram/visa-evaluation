@@ -242,7 +242,20 @@ export default function EvaluationDetailPage() {
       {evaluation.status === 'completed' && evaluation.evaluationResult && (
         <div className="space-y-6 mb-8">
           {/* Eligibility Score */}
-          <div className="bg-[var(--primary)] rounded-xl p-8 text-[var(--primary-foreground)]">
+          <div
+            className="rounded-xl p-8 text-white"
+            style={{
+              backgroundColor: evaluation.evaluationResult.isMalicious
+                ? 'var(--warning)'
+                : evaluation.evaluationResult.score >= 75
+                ? 'var(--success)'
+                : evaluation.evaluationResult.score >= 60
+                ? '#3b82f6' // blue
+                : evaluation.evaluationResult.score >= 40
+                ? 'var(--warning)'
+                : 'var(--error)'
+            }}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="opacity-80 mb-2">Eligibility Score</p>
@@ -256,25 +269,25 @@ export default function EvaluationDetailPage() {
                       <AlertCircle className="w-5 h-5 mr-2" />
                       {evaluation.evaluationResult.maliciousReason || 'Your application needs review'}
                     </span>
-                  ) : evaluation.evaluationResult.score >= 70 ? (
+                  ) : evaluation.evaluationResult.score >= 75 ? (
                     <span className="flex items-center">
                       <CheckCircle2 className="w-5 h-5 mr-2" />
-                      Excellent eligibility - Strong application!
+                      Excellent - Strong application!
                     </span>
-                  ) : evaluation.evaluationResult.score >= 50 ? (
+                  ) : evaluation.evaluationResult.score >= 60 ? (
                     <span className="flex items-center">
                       <CheckCircle2 className="w-5 h-5 mr-2" />
-                      Good eligibility - You are likely eligible
+                      Likely Eligible - Solid profile
                     </span>
-                  ) : evaluation.evaluationResult.score >= 30 ? (
+                  ) : evaluation.evaluationResult.score >= 40 ? (
                     <span className="flex items-center">
                       <AlertCircle className="w-5 h-5 mr-2" />
-                      Moderate eligibility - Improvements recommended
+                      Moderate - Improvements recommended
                     </span>
                   ) : (
                     <span className="flex items-center">
                       <XCircle className="w-5 h-5 mr-2" />
-                      Low eligibility - Significant improvements needed
+                      Low - Significant improvements needed
                     </span>
                   )}
                 </p>
