@@ -17,6 +17,7 @@ import {
   Activity,
   BookOpen,
   ChevronDown,
+  CreditCard,
 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -46,6 +47,7 @@ export function Navbar() {
     { name: 'API Keys', href: '/dashboard/api-keys', icon: Key },
     { name: 'API Usage', href: '/dashboard/api-usage', icon: Activity },
     { name: 'API Docs', href: '/dashboard/api-docs', icon: BookOpen },
+    { name: 'Manage Subscription', href: '/dashboard/subscription/manage', icon: CreditCard },
     { name: 'Profile', href: '/dashboard/profile', icon: User },
   ];
 

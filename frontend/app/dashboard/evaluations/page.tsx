@@ -184,9 +184,14 @@ export default function EvaluationsPage() {
                   </div>
                   <div>
                     <p className="text-sm text-[var(--muted-foreground)]">Status</p>
-                    <p className={`text-sm font-semibold ${
-                      !evaluation.evaluationResult.isMalicious ? 'text-[var(--success-foreground)]' : 'text-[var(--warning-foreground)]'
-                    }`}>
+                    <p
+                      className="text-sm font-semibold"
+                      style={{
+                        color: !evaluation.evaluationResult.isMalicious
+                          ? 'var(--success)'
+                          : 'var(--warning)'
+                      }}
+                    >
                       {!evaluation.evaluationResult.isMalicious ? 'Likely Eligible' : 'Needs Review'}
                     </p>
                   </div>
@@ -194,7 +199,10 @@ export default function EvaluationsPage() {
               )}
 
               {evaluation.status === 'processing' && (
-                <div className="flex items-center space-x-2 pt-4 border-t border-[var(--border)] text-sm text-[var(--info-foreground)]">
+                <div
+                  className="flex items-center space-x-2 pt-4 border-t border-[var(--border)] text-sm"
+                  style={{ color: 'var(--info)' }}
+                >
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Processing your documents...</span>
                 </div>
