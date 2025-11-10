@@ -5,7 +5,8 @@ import {
   createCheckoutSession,
   getSubscriptionStatus,
   cancelSubscription,
-  getSubscriptionUsage
+  getSubscriptionUsage,
+  createBillingPortalSession
 } from '../controllers/subscriptionController';
 
 const router = express.Router();
@@ -44,5 +45,12 @@ router.get('/usage', authenticate, getSubscriptionUsage);
  * @access  Private
  */
 router.post('/cancel', authenticate, cancelSubscription);
+
+/**
+ * @route   POST /api/subscription/billing-portal
+ * @desc    Create a Stripe billing portal session
+ * @access  Private
+ */
+router.post('/billing-portal', authenticate, createBillingPortalSession);
 
 export default router;

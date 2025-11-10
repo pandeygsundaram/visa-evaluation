@@ -248,10 +248,49 @@ export const getSubscriptionUsage = async (req: AuthRequest, res: Response) => {
   }
 };
 
+/**
+ * Create a Stripe billing portal session
+ * Allows users to manage subscription, payment methods, and invoices
+ */
+export const createBillingPortalSession = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized'
+      });
+    }
+
+    const { returnUrl } = req.body;
+
+    // Create billing portal session
+    const session = await stripeService.createBillingPortalSession(
+      userId,
+      returnUrl
+    );
+
+    res.json({
+      success: true,
+      data: {
+        url: session.url
+      }
+    });
+  } catch (error: any) {
+    console.error('Error creating billing portal session:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to create billing portal session',
+      error: error.message
+    });
+  }
+};
+
 export default {
   getPlans,
   createCheckoutSession,
   getSubscriptionStatus,
   cancelSubscription,
-  getSubscriptionUsage
+  getSubscriptionUsage,
+  createBillingPortalSession
 };

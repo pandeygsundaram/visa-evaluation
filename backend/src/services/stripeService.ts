@@ -450,6 +450,40 @@ export const incrementSubscriptionUsage = async (userId: string): Promise<void> 
   }
 };
 
+/**
+ * Create a Stripe billing portal session
+ * Allows customers to manage their subscription, payment methods, and invoices
+ */
+export const createBillingPortalSession = async (
+  userId: string,
+  returnUrl?: string
+): Promise<Stripe.BillingPortal.Session> => {
+  try {
+    // Get user
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Check if user has a Stripe customer ID
+    if (!user.stripeCustomerId) {
+      throw new Error('User does not have a Stripe customer account. Please subscribe first.');
+    }
+
+    // Create billing portal session
+    const session = await stripe.billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: returnUrl || `${process.env.FRONTEND_URL}/dashboard/subscription`,
+    });
+
+    console.log(`✅ Created billing portal session for user ${userId}`);
+    return session;
+  } catch (error: any) {
+    console.error('Error creating billing portal session:', error);
+    throw new Error(`Failed to create billing portal session: ${error.message}`);
+  }
+};
+
 export default {
   getOrCreateStripeCustomer,
   createCheckoutSession,
@@ -461,5 +495,6 @@ export default {
   getSubscriptionDetails,
   cancelSubscription,
   checkSubscriptionQuota,
-  incrementSubscriptionUsage
+  incrementSubscriptionUsage,
+  createBillingPortalSession
 };
