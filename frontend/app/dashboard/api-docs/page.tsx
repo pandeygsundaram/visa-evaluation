@@ -14,58 +14,31 @@ export default function ApiDocsPage() {
   };
 
   const examples = {
-    curl: {
-      authentication: `curl -X POST https://backend.visaeval.live/api/evaluations \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: multipart/form-data" \\
+    curl: `curl -X POST https://backend.visaeval.live/api/evaluations/public \\
+  -H "x-api-key: YOUR_API_KEY" \\
   -F "country=USA" \\
   -F "visaType=H1B" \\
   -F "documents=@/path/to/resume.pdf"`,
-      getEvaluations: `curl -X GET https://backend.visaeval.live/api/evaluations \\
-  -H "Authorization: Bearer YOUR_API_KEY"`,
-      getEvaluationById: `curl -X GET https://backend.visaeval.live/api/evaluations/{evaluationId} \\
-  -H "Authorization: Bearer YOUR_API_KEY"`,
-    },
-    javascript: {
-      authentication: `const formData = new FormData();
+    javascript: `const formData = new FormData();
 formData.append('country', 'USA');
 formData.append('visaType', 'H1B');
 formData.append('documents', fileInput.files[0]);
 
-const response = await fetch('https://backend.visaeval.live/api/evaluations', {
+const response = await fetch('https://backend.visaeval.live/api/evaluations/public', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_API_KEY'
+    'x-api-key': 'YOUR_API_KEY'
   },
   body: formData
 });
 
 const data = await response.json();
 console.log(data);`,
-      getEvaluations: `const response = await fetch('https://backend.visaeval.live/api/evaluations', {
-  headers: {
-    'Authorization': 'Bearer YOUR_API_KEY'
-  }
-});
+    python: `import requests
 
-const data = await response.json();
-console.log(data.data.evaluations);`,
-      getEvaluationById: `const evaluationId = 'YOUR_EVALUATION_ID';
-const response = await fetch(\`https://backend.visaeval.live/api/evaluations/\${evaluationId}\`, {
-  headers: {
-    'Authorization': 'Bearer YOUR_API_KEY'
-  }
-});
-
-const data = await response.json();
-console.log(data.data);`,
-    },
-    python: {
-      authentication: `import requests
-
-url = "https://backend.visaeval.live/api/evaluations"
+url = "https://backend.visaeval.live/api/evaluations/public"
 headers = {
-    "Authorization": "Bearer YOUR_API_KEY"
+    "x-api-key": "YOUR_API_KEY"
 }
 files = {
     'documents': open('/path/to/resume.pdf', 'rb')
@@ -77,26 +50,6 @@ data = {
 
 response = requests.post(url, headers=headers, files=files, data=data)
 print(response.json())`,
-      getEvaluations: `import requests
-
-url = "https://backend.visaeval.live/api/evaluations"
-headers = {
-    "Authorization": "Bearer YOUR_API_KEY"
-}
-
-response = requests.get(url, headers=headers)
-print(response.json())`,
-      getEvaluationById: `import requests
-
-evaluation_id = "YOUR_EVALUATION_ID"
-url = f"https://backend.visaeval.live/api/evaluations/{evaluation_id}"
-headers = {
-    "Authorization": "Bearer YOUR_API_KEY"
-}
-
-response = requests.get(url, headers=headers)
-print(response.json())`,
-    },
   };
 
   return (
@@ -133,15 +86,15 @@ print(response.json())`,
         <h2 className="text-2xl font-semibold text-[var(--foreground)] mb-4">Authentication</h2>
         <p className="text-[var(--muted-foreground)] mb-4">
           All API requests require authentication using your API key. Include your API key in the
-          <code className="mx-1 px-2 py-1 bg-[var(--muted)] rounded text-sm">Authorization</code> header:
+          <code className="mx-1 px-2 py-1 bg-[var(--muted)] rounded text-sm">x-api-key</code> header:
         </p>
         <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-4">
           <pre className="text-sm overflow-x-auto">
-            <code className="text-[var(--foreground)]">Authorization: Bearer YOUR_API_KEY</code>
+            <code className="text-[var(--foreground)]">x-api-key: YOUR_API_KEY</code>
           </pre>
         </div>
         <p className="text-sm text-[var(--muted-foreground)] mt-3">
-          You can manage your API keys in the <a href="/dashboard/api-keys" className="text-[var(--primary)] hover:underline">API Keys</a> section.
+          You can generate and manage your API keys in the <a href="/dashboard/api-keys" className="text-[var(--primary)] hover:underline">API Keys</a> section.
         </p>
       </section>
 
@@ -162,7 +115,7 @@ print(response.json())`,
         ))}
       </div>
 
-      {/* Endpoints */}
+      {/* Endpoint */}
       <section className="space-y-6">
         {/* Create Evaluation */}
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
@@ -179,7 +132,7 @@ print(response.json())`,
           <div className="mb-4">
             <p className="text-sm text-[var(--muted-foreground)] mb-2">Endpoint</p>
             <code className="px-3 py-2 bg-[var(--muted)] text-[var(--foreground)] rounded text-sm block">
-              /api/evaluations
+              /api/evaluations/public
             </code>
           </div>
 
@@ -211,7 +164,7 @@ print(response.json())`,
                   <td className="py-2 font-mono">documents</td>
                   <td className="py-2">file[]</td>
                   <td className="py-2">Yes</td>
-                  <td className="py-2">Document files (PDF, DOC, DOCX)</td>
+                  <td className="py-2">Document files (PDF, DOC, DOCX, max 10 files, 10MB each)</td>
                 </tr>
               </tbody>
             </table>
@@ -221,7 +174,7 @@ print(response.json())`,
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-semibold text-[var(--foreground)]">Example Request</p>
               <button
-                onClick={() => copyToClipboard(examples[selectedLanguage as keyof typeof examples].authentication, 0)}
+                onClick={() => copyToClipboard(examples[selectedLanguage as keyof typeof examples], 0)}
                 className="flex items-center gap-2 px-3 py-1 rounded-lg bg-[var(--muted)] hover:bg-[var(--muted)]/80 text-[var(--foreground)] transition-colors"
               >
                 {copiedIndex === 0 ? (
@@ -239,13 +192,13 @@ print(response.json())`,
             </div>
             <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-4 overflow-x-auto">
               <pre className="text-sm">
-                <code className="text-[var(--foreground)]">{examples[selectedLanguage as keyof typeof examples].authentication}</code>
+                <code className="text-[var(--foreground)]">{examples[selectedLanguage as keyof typeof examples]}</code>
               </pre>
             </div>
           </div>
 
           <div className="mt-4">
-            <p className="text-sm font-semibold text-[var(--foreground)] mb-2">Response</p>
+            <p className="text-sm font-semibold text-[var(--foreground)] mb-2">Success Response (200)</p>
             <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-4 overflow-x-auto">
               <pre className="text-sm">
                 <code className="text-[var(--foreground)]">{`{
@@ -258,109 +211,55 @@ print(response.json())`,
     "visaType": "H1B",
     "documentsUploaded": 3,
     "result": {
+      "isMalicious": false,
       "score": 75,
       "summary": "Your profile shows strong qualifications...",
+      "checkpoints": [...],
       "strengths": [...],
       "weaknesses": [...],
       "suggestions": [...]
-    }
+    },
+    "createdAt": "2025-01-10T12:34:56.789Z",
+    "processedAt": "2025-01-10T12:35:10.123Z"
   }
 }`}</code>
               </pre>
             </div>
           </div>
-        </div>
 
-        {/* Get All Evaluations */}
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xl font-semibold text-[var(--foreground)]">Get All Evaluations</h3>
-              <p className="text-sm text-[var(--muted-foreground)] mt-1">Retrieve all your evaluations</p>
-            </div>
-            <span className="px-3 py-1 bg-[var(--info)] text-[var(--info-foreground)] rounded-full text-sm font-medium">
-              GET
-            </span>
-          </div>
-
-          <div className="mb-4">
-            <p className="text-sm text-[var(--muted-foreground)] mb-2">Endpoint</p>
-            <code className="px-3 py-2 bg-[var(--muted)] text-[var(--foreground)] rounded text-sm block">
-              /api/evaluations
-            </code>
-          </div>
-
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-[var(--foreground)]">Example Request</p>
-              <button
-                onClick={() => copyToClipboard(examples[selectedLanguage as keyof typeof examples].getEvaluations, 1)}
-                className="flex items-center gap-2 px-3 py-1 rounded-lg bg-[var(--muted)] hover:bg-[var(--muted)]/80 text-[var(--foreground)] transition-colors"
-              >
-                {copiedIndex === 1 ? (
-                  <>
-                    <Check className="w-4 h-4 text-[var(--success)]" />
-                    <span className="text-sm">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    <span className="text-sm">Copy</span>
-                  </>
-                )}
-              </button>
-            </div>
-            <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-4 overflow-x-auto">
-              <pre className="text-sm">
-                <code className="text-[var(--foreground)]">{examples[selectedLanguage as keyof typeof examples].getEvaluations}</code>
-              </pre>
-            </div>
-          </div>
-        </div>
-
-        {/* Get Evaluation by ID */}
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xl font-semibold text-[var(--foreground)]">Get Evaluation by ID</h3>
-              <p className="text-sm text-[var(--muted-foreground)] mt-1">Retrieve a specific evaluation by its ID</p>
-            </div>
-            <span className="px-3 py-1 bg-[var(--info)] text-[var(--info-foreground)] rounded-full text-sm font-medium">
-              GET
-            </span>
-          </div>
-
-          <div className="mb-4">
-            <p className="text-sm text-[var(--muted-foreground)] mb-2">Endpoint</p>
-            <code className="px-3 py-2 bg-[var(--muted)] text-[var(--foreground)] rounded text-sm block">
-              /api/evaluations/:id
-            </code>
-          </div>
-
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-[var(--foreground)]">Example Request</p>
-              <button
-                onClick={() => copyToClipboard(examples[selectedLanguage as keyof typeof examples].getEvaluationById, 2)}
-                className="flex items-center gap-2 px-3 py-1 rounded-lg bg-[var(--muted)] hover:bg-[var(--muted)]/80 text-[var(--foreground)] transition-colors"
-              >
-                {copiedIndex === 2 ? (
-                  <>
-                    <Check className="w-4 h-4 text-[var(--success)]" />
-                    <span className="text-sm">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    <span className="text-sm">Copy</span>
-                  </>
-                )}
-              </button>
-            </div>
-            <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-4 overflow-x-auto">
-              <pre className="text-sm">
-                <code className="text-[var(--foreground)]">{examples[selectedLanguage as keyof typeof examples].getEvaluationById}</code>
-              </pre>
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-[var(--foreground)] mb-2">Error Responses</p>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-[var(--muted-foreground)] mb-1">401 - Missing API Key</p>
+                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3">
+                  <pre className="text-xs">
+                    <code className="text-[var(--foreground)]">{`{
+  "success": false,
+  "message": "API key is required",
+  "error": "Missing x-api-key header"
+}`}</code>
+                  </pre>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-[var(--muted-foreground)] mb-1">429 - Rate Limit Exceeded</p>
+                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3">
+                  <pre className="text-xs">
+                    <code className="text-[var(--foreground)]">{`{
+  "success": false,
+  "message": "API rate limit exceeded",
+  "error": "You have reached your plan limit",
+  "quota": {
+    "limit": 5,
+    "used": 5,
+    "remaining": 0,
+    "plan": "free"
+  }
+}`}</code>
+                  </pre>
+                </div>
+              </div>
             </div>
           </div>
         </div>
