@@ -251,15 +251,30 @@ export default function EvaluationDetailPage() {
                   <span className="text-2xl ml-2">/100</span>
                 </div>
                 <p className="mt-4 text-lg">
-                  {!evaluation.evaluationResult.isMalicious ? (
+                  {evaluation.evaluationResult.isMalicious ? (
+                    <span className="flex items-center">
+                      <AlertCircle className="w-5 h-5 mr-2" />
+                      {evaluation.evaluationResult.maliciousReason || 'Your application needs review'}
+                    </span>
+                  ) : evaluation.evaluationResult.score >= 70 ? (
                     <span className="flex items-center">
                       <CheckCircle2 className="w-5 h-5 mr-2" />
-                      You are likely eligible for this visa
+                      Excellent eligibility - Strong application!
+                    </span>
+                  ) : evaluation.evaluationResult.score >= 50 ? (
+                    <span className="flex items-center">
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                      Good eligibility - You are likely eligible
+                    </span>
+                  ) : evaluation.evaluationResult.score >= 30 ? (
+                    <span className="flex items-center">
+                      <AlertCircle className="w-5 h-5 mr-2" />
+                      Moderate eligibility - Improvements recommended
                     </span>
                   ) : (
                     <span className="flex items-center">
-                      <AlertCircle className="w-5 h-5 mr-2" />
-                      {evaluation.evaluationResult.maliciousReason || 'Additional requirements may be needed'}
+                      <XCircle className="w-5 h-5 mr-2" />
+                      Low eligibility - Significant improvements needed
                     </span>
                   )}
                 </p>
