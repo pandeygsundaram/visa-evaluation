@@ -88,7 +88,7 @@ export default function ApiUsagePage() {
       console.log('📊 Fetching usage data:', { startDate, endDate, token: token?.substring(0, 10) + '...' });
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/analytics/usage?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+        `/api/analytics/usage?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -121,7 +121,7 @@ export default function ApiUsagePage() {
   const fetchQuotaInfo = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/analytics/summary`,
+        `/api/analytics/summary`,
         {
           headers: {
             'Authorization': `Bearer ${token}`

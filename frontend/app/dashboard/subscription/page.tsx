@@ -38,7 +38,7 @@ export default function SubscriptionPage() {
 
   const fetchPlan = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/plans`);
+      const response = await fetch(`/api/subscription/plans`);
       const data = await response.json();
 
       if (data.success) {
@@ -66,7 +66,7 @@ export default function SubscriptionPage() {
       const successUrl = `${window.location.origin}/dashboard/subscription/success`;
       const cancelUrl = `${window.location.origin}/dashboard/subscription/cancel`;
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/create-checkout`, {
+      const response = await fetch(`/api/subscription/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

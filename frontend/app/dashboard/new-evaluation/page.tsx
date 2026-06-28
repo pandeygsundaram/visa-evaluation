@@ -33,7 +33,7 @@ export default function NewEvaluationPage() {
 
   const fetchQuotaInfo = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/usage`, {
+      const response = await fetch(`/api/subscription/usage`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -124,7 +124,7 @@ export default function NewEvaluationPage() {
         formData.append('documents', file);
       });
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/evaluations`, {
+      const response = await fetch(`/api/evaluations`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
