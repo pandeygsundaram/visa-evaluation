@@ -38,7 +38,7 @@ export default function DashboardPage() {
 
   const fetchQuotaInfo = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/usage`, {
+      const response = await fetch(`/api/subscription/usage`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -56,7 +56,7 @@ export default function DashboardPage() {
 
   const fetchEvaluationsCount = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/evaluations`, {
+      const response = await fetch(`/api/evaluations`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

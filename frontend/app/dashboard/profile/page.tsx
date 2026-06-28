@@ -23,7 +23,7 @@ export default function ProfilePage() {
 
   const fetchSubscriptionInfo = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/status`, {
+      const response = await fetch(`/api/subscription/status`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -43,7 +43,7 @@ export default function ProfilePage() {
 
   const fetchEvaluationsCount = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/evaluations`, {
+      const response = await fetch(`/api/evaluations`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

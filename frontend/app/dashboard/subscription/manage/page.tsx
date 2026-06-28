@@ -55,7 +55,7 @@ export default function ManageSubscriptionPage() {
 
   const fetchSubscriptionDetails = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/status`, {
+      const response = await fetch(`/api/subscription/status`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -83,7 +83,7 @@ export default function ManageSubscriptionPage() {
 
     setCanceling(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/cancel`, {
+      const response = await fetch(`/api/subscription/cancel`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -109,7 +109,7 @@ export default function ManageSubscriptionPage() {
   const handleManageBilling = async () => {
     setLoadingPortal(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/billing-portal`, {
+      const response = await fetch(`/api/subscription/portal`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

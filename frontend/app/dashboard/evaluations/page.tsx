@@ -31,7 +31,7 @@ export default function EvaluationsPage() {
 
   const fetchEvaluations = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/evaluations`, {
+      const response = await fetch(`/api/evaluations`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

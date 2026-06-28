@@ -71,7 +71,7 @@ export default function EvaluationDetailPage() {
   const fetchEvaluation = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/evaluations/${evaluationId}`,
+        `/api/evaluations/${evaluationId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -103,7 +103,7 @@ export default function EvaluationDetailPage() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/evaluations/${evaluationId}`,
+        `/api/evaluations/${evaluationId}`,
         {
           method: 'DELETE',
           headers: {
