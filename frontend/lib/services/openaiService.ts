@@ -1,10 +1,16 @@
 import OpenAI from 'openai';
 import { buildCompletePrompt, validateLLMResponse, PromptData } from '@/lib/utils/promptBuilder';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+let _openai: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    const key = process.env.OPENAI_API_KEY;
+    if (!key) throw new Error('OPENAI_API_KEY is not set');
+    _openai = new OpenAI({ apiKey: key });
+  }
+  return _openai;
+}
 
 export interface AnalysisResult {
   isMalicious: boolean;
@@ -41,7 +47,7 @@ export async function analyzeDocument(
     console.log('🤖 Calling OpenAI for document analysis...');
 
     // Call OpenAI API
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: 'gpt-4-turbo-preview', // or 'gpt-4' or 'gpt-3.5-turbo'
       messages: [
         { role: 'system', content: systemPrompt },
@@ -105,7 +111,7 @@ export function validateOpenAIConfig(): boolean {
  */
 export async function testOpenAIConnection(): Promise<boolean> {
   try {
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: 'Hello' }],
       max_tokens: 5
