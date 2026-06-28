@@ -2,7 +2,22 @@ import Stripe from 'stripe';
 import { getDb } from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+let _stripe: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!_stripe) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) throw new Error('STRIPE_SECRET_KEY is not set');
+    _stripe = new Stripe(key);
+  }
+  return _stripe;
+}
+
+export const stripe = new Proxy({} as Stripe, {
+  get(_t, prop: string) {
+    return (getStripe() as any)[prop];
+  },
+});
 
 export const STRIPE_CONFIG = {
   webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
