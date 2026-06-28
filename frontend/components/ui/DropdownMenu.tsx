@@ -101,7 +101,7 @@ export function DropdownMenuContent({
   return (
     <div
       ref={contentRef}
-      className={`absolute ${alignClass} mt-2 w-56 rounded-md bg-[var(--card)] border border-[var(--border)] shadow-lg z-50 ${className}`}
+      className={`absolute ${alignClass} mt-2 w-56 rounded-md bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg z-50 ${className}`}
     >
       <div className="py-1">{children}</div>
     </div>
@@ -116,7 +116,7 @@ export function DropdownMenuLabel({
   className?: string;
 }) {
   return (
-    <div className={`px-4 py-2 text-sm font-semibold text-[var(--foreground)] ${className}`}>
+    <div className={`px-4 py-2 text-sm font-semibold text-gray-900 ${className}`}>
       {children}
     </div>
   );
@@ -150,7 +150,7 @@ export function DropdownMenuItem({
     <button
       onClick={handleClick}
       disabled={disabled}
-      className={`w-full text-left px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`w-full text-left px-4 py-2 text-sm text-gray-900 hover:bg-white/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
       {children}
     </button>

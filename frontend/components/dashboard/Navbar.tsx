@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@/components/ui/Button';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import {
   Home,
   Globe,
@@ -52,38 +51,36 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="bg-[var(--card)] border-b border-[var(--border)]">
+    <nav className="bg-white/60 backdrop-blur-xl border-b border-white/40 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/dashboard" className="text-xl font-bold text-[var(--primary)]">
+            <Link href="/dashboard" className="text-xl font-bold text-[#0066ff]">
               Visa Evaluation
             </Link>
           </div>
 
           {/* Desktop Navigation - Right Side */}
           <div className="hidden md:flex md:items-center md:space-x-4">
-            <ThemeToggle />
-
             {/* User Dropdown Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-[var(--muted)] transition-colors">
+                <button className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-white/40 transition-colors">
                   <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center">
                     <span className="text-sm font-semibold text-[var(--primary-foreground)]">
                       {user?.name?.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-[var(--foreground)]">{user?.name}</span>
-                  <ChevronDown className="w-4 h-4 text-[var(--muted-foreground)]" />
+                  <span className="text-sm font-medium text-gray-900">{user?.name}</span>
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel>
                   <div>
-                    <p className="font-medium text-[var(--foreground)]">{user?.name}</p>
-                    <p className="text-xs text-[var(--muted-foreground)] truncate">{user?.email}</p>
+                    <p className="font-medium text-gray-900">{user?.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -95,7 +92,7 @@ export function Navbar() {
                     <DropdownMenuItem
                       key={item.name}
                       onClick={() => router.push(item.href)}
-                      className={isActive ? 'bg-[var(--muted)] text-[var(--primary)]' : ''}
+                      className={isActive ? 'bg-white/40 text-[#0066ff]' : ''}
                     >
                       <div className="flex items-center">
                         <Icon className="w-4 h-4 mr-3" />
@@ -106,7 +103,7 @@ export function Navbar() {
                 })}
 
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-[var(--error)]">
+                <DropdownMenuItem onClick={handleLogout} className="text-red-500">
                   <div className="flex items-center">
                     <LogOut className="w-4 h-4 mr-3" />
                     Logout
@@ -120,7 +117,7 @@ export function Navbar() {
           <div className="flex items-center md:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-white/40 transition-colors"
             >
               {isMobileMenuOpen ? (
                 <X className="block h-6 w-6" />
@@ -134,7 +131,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-[var(--card)]">
+        <div className="md:hidden bg-white/70 backdrop-blur-xl">
           <div className="pt-2 pb-3 space-y-1">
             {navigation.map((item) => {
               const Icon = item.icon;
@@ -145,8 +142,8 @@ export function Navbar() {
                   href={item.href}
                   className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors ${
                     isActive
-                      ? 'bg-[var(--muted)] border-[var(--primary)] text-[var(--primary)]'
-                      : 'border-transparent text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:border-[var(--border)] hover:text-[var(--foreground)]'
+                      ? 'bg-white/40 border-[var(--primary)] text-[#0066ff]'
+                      : 'border-transparent text-gray-500 hover:bg-white/40 hover:border-white/40 hover:text-gray-900'
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -158,7 +155,7 @@ export function Navbar() {
               );
             })}
           </div>
-          <div className="pt-4 pb-3 border-t border-[var(--border)]">
+          <div className="pt-4 pb-3 border-t border-white/40">
             <div className="flex items-center px-4">
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 rounded-full bg-[var(--primary)] flex items-center justify-center">
@@ -168,25 +165,19 @@ export function Navbar() {
                 </div>
               </div>
               <div className="ml-3">
-                <div className="text-base font-medium text-[var(--foreground)]">
+                <div className="text-base font-medium text-gray-900">
                   {user?.name}
                 </div>
-                <div className="text-sm font-medium text-[var(--muted-foreground)]">
+                <div className="text-sm font-medium text-gray-500">
                   {user?.email}
                 </div>
               </div>
             </div>
             <div className="mt-3 px-2 space-y-1">
-              <div className="flex items-center px-3 py-2">
-                <span className="text-sm font-medium text-[var(--foreground)] mr-2">
-                  Theme
-                </span>
-                <ThemeToggle />
-              </div>
               <Button
                 variant="ghost"
                 onClick={handleLogout}
-                className="w-full flex items-center justify-start text-[var(--error)]"
+                className="w-full flex items-center justify-start text-red-500"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
